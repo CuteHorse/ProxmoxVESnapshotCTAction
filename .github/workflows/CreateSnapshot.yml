@@ -1,0 +1,37 @@
+name: Create proxmox ve ct snapshot
+
+on:
+  workflow_call:
+    inputs:
+      domain:
+        required: true
+        type: string
+      node-name:
+        required: true
+        type: string
+      ct-id:
+        required: true
+        type: string
+      user:
+        required: true
+        type: string
+    secrets:
+      token:
+        required: true
+
+jobs:
+  create-snapshot:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Get current date
+      id: date
+      run: echo "::set-output name=date::$(date +'%s')"
+
+    - name: Create CT snapshot
+      uses: fjogeleit/http-request-action@v1
+      with:
+        url: 'https://${{inputs.domain}}/api2/json/nodes/${{inputs.node-name}}/lxc/${{inputs.ct-id}}/snapshot'
+        method: 'POST'
+        contentType: 'application/x-www-form-urlencoded'
+        customHeaders: '{"Authorization": "PVEAPIToken=${{inputs.user}}=${{secrets.token}}"}'
+        data: 'snapname=UndoCommit_${{ github.RUN_ID }}_${{ steps.date.outputs.date }}'
